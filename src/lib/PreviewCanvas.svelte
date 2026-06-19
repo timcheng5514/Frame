@@ -101,12 +101,17 @@
     };
 
     if (canvas && imageElement) {
+      redraw();
+
+      // Listen to fonts loading events to trigger a redraw when dynamic font sheets or local files are ready
       if (document.fonts) {
-        document.fonts.ready.then(() => {
+        const handleFontsLoaded = () => {
           redraw();
-        });
-      } else {
-        redraw();
+        };
+        document.fonts.addEventListener('loadingdone', handleFontsLoaded);
+        return () => {
+          document.fonts.removeEventListener('loadingdone', handleFontsLoaded);
+        };
       }
     }
   });
@@ -227,9 +232,10 @@
       ctx.textBaseline = 'middle';
       
       // Determine font family (CSS variables are not supported by Canvas ctx.font)
-      let fontName = "'Outfit', 'Noto Sans TC', system-ui, -apple-system, sans-serif";
+      let fontName = fontFamily;
       if (fontFamily === 'serif') fontName = "'Lora', 'Noto Serif TC', Georgia, serif";
-      if (fontFamily === 'monospace') fontName = "ui-monospace, 'Courier New', monospace";
+      else if (fontFamily === 'sans-serif') fontName = "'Outfit', 'Noto Sans TC', system-ui, -apple-system, sans-serif";
+      else if (fontFamily === 'monospace') fontName = "ui-monospace, 'Courier New', monospace";
       
       if (styleMode === 'polaroid') {
         const textY = imgY + photoH + (bottomMargin - margin) / 2 + margin * 0.08;

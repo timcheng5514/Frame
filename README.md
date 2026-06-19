@@ -22,7 +22,8 @@
   - Border thickness and bottom padding (percentage-based scaling to preserve quality).
   - Optional inner thin border surrounding the photo.
   - 4 elegant color presets (朝靄白 / Mist White, 暖沙黃 / Warm Sand, 雨燕灰 / Swift Gray, 玄武黑 / Basalt Black) or custom selections.
-  - Typography options: Serif, Sans-serif, and Monospace fonts, with adjustable weight and size scale.
+  - Typography options: Curated preset fonts (Lora / Noto Serif, Outfit / Noto Sans, Monospace, Playfair Display, Cormorant Garamond, Cinzel, Montserrat, Inter, Caveat, Alex Brush), adjustable font weights, and text size scale.
+  - Custom font loading: Upload local font files (.ttf, .otf, .woff, .woff2) to apply custom typography.
 - 🖋️ **Custom Titles & Signatures**: Add custom titles (e.g., location/story) and author signatures (e.g., photographer name).
 - ✏️ **Manual EXIF Editor**: Ability to manually input or modify EXIF parameters (great for scanned film or messaging apps that strip metadata).
 - 💾 **High-Resolution Export**: Renders to an HTML5 Canvas matching the image's original dimensions and exports as a high-quality `.jpg`.
@@ -107,7 +108,8 @@ npm run preview
   - 邊框寬度及下方文字區高度（以比例計算，適配各種相片解析度）。
   - 可選擇是否開啟相片周圍的「細內邊框」。
   - 提供 4 種精心調配的經典配色預設（朝靄白、暖沙黃、雨燕灰、玄武黑）以及文字/邊框自訂色彩。
-  - 字體樣式支援：優雅襯線體 (Serif)、簡約無襯線 (Sans-serif)、復古等寬體 (Monospace)；可自由調整字重（字體粗細）與字體縮放大小。
+  - 字體樣式支援：精心調配的經典預設字體（Lora / Noto Serif, Outfit / Noto Sans, Playfair Display, Cormorant Garamond, Cinzel, Montserrat, Inter, 還有 Caveat 與 Alex Brush 手寫簽名體），並可自由調整字重與縮放大小。
+  - 自訂字體功能：支援直接上傳本地端字體檔案（.ttf, .otf, .woff, .woff2）套用。
 - 🖋️ **客製化文字標題與簽名**：自由加入相片標題（如景點名稱）與作者簽名（如 Photo by Alex）。
 - ✏️ **EXIF 手動自訂/修正**：若相片無 EXIF 資訊（如掃描膠卷、老相機、或被通訊軟體壓縮過），可透過側邊欄隨時手動填寫、修改或補齊參數。
 - 💾 **高解析度匯出**：使用 HTML5 Canvas 依據照片原始尺寸進行渲染，匯出無失真、高品質的 `.jpg` 圖像。

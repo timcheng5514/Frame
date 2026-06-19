@@ -44,11 +44,68 @@
     { value: '2.7:1', label: '2.7:1 寬銀幕 (Ultra)' }
   ];
 
-  const fontsList = [
-    { value: 'serif', label: '優雅襯線體 (Serif)' },
-    { value: 'sans-serif', label: '簡約無襯線 (Sans-serif)' },
-    { value: 'monospace', label: '復古等寬體 (Monospace)' }
+  const defaultFonts = [
+    { value: 'serif', label: '優雅襯線體 (Lora / Noto Serif)' },
+    { value: 'sans-serif', label: '簡約無襯線 (Outfit / Noto Sans)' },
+    { value: 'monospace', label: '復古等寬體 (Monospace)' },
+    
+    // Curated Google Fonts
+    { value: "'Playfair Display', 'Noto Serif TC', serif", label: '華麗展示 serif (Playfair Display)' },
+    { value: "'Cormorant Garamond', 'Noto Serif TC', serif", label: '古典加拉蒙 serif (Cormorant Garamond)' },
+    { value: "'Cinzel', 'Noto Serif TC', serif", label: '羅馬古典面 serif (Cinzel)' },
+    { value: "'Montserrat', 'Noto Sans TC', sans-serif", label: '幾何現代 sans (Montserrat)' },
+    { value: "'Inter', 'Noto Sans TC', sans-serif", label: '極致簡約 sans (Inter)' },
+    { value: "'Caveat', cursive", label: '手寫簽名體 cursive (Caveat)' },
+    { value: "'Alex Brush', cursive", label: '流暢草書體 cursive (Alex Brush)' }
   ];
+
+  let customFonts = $state([]);
+  let fontsList = $derived([...defaultFonts, ...customFonts]);
+
+  let fontError = $state('');
+
+  async function handleLocalFontUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const buffer = e.target.result;
+          // Extract base font name without extension
+          const fontName = file.name.substring(0, file.name.lastIndexOf('.'));
+          
+          // Create and register FontFace
+          const fontFace = new FontFace(fontName, buffer);
+          const loadedFace = await fontFace.load();
+          document.fonts.add(loadedFace);
+
+          // Add to customFonts list reactively
+          const fontValue = `"${fontName}"`;
+          
+          // Check if already in list
+          if (!customFonts.some(f => f.value === fontValue)) {
+            customFonts = [...customFonts, {
+              value: fontValue,
+              label: `本地: ${fontName}`
+            }];
+          }
+
+          // Auto-select
+          fontFamily = fontValue;
+          fontError = '';
+        } catch (err) {
+          console.error(err);
+          fontError = '字體檔案解析失敗，請確認檔案格式是否正確。';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } catch (err) {
+      console.error(err);
+      fontError = '讀取字體檔案失敗';
+    }
+  }
 
   const weightsList = [
     { value: '300', label: '細體 (Light 300)' },
@@ -119,6 +176,24 @@
     {#if styleMode !== 'pure'}
       <div class="control-group" style="margin-top: 16px;">
         <Select label="字體樣式" options={fontsList} bind:value={fontFamily} />
+      </div>
+
+      <!-- Local Font Upload Control -->
+      <div class="custom-font-box" style="margin-top: 12px; padding: 10px;">
+        <div class="local-font-row">
+          <label class="file-upload-label">
+            <span>上傳自訂字體檔案 (.ttf, .otf, .woff, .woff2)</span>
+            <input 
+              type="file" 
+              accept=".ttf,.otf,.woff,.woff2" 
+              onchange={handleLocalFontUpload}
+              style="display: none;"
+            />
+          </label>
+        </div>
+        {#if fontError}
+          <div class="font-error-msg" style="margin-top: 6px;">{fontError}</div>
+        {/if}
       </div>
 
       <div class="control-group" style="margin-top: 16px;">
@@ -350,5 +425,45 @@
     font-size: 0.75rem;
     padding: 6px 10px;
     background-color: var(--bg-card);
+  }
+
+  /* Custom Font adder styles */
+  .custom-font-box {
+    margin-top: 8px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+  }
+
+  .local-font-row {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .file-upload-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--border-color);
+    background-color: var(--bg-card);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+
+  .file-upload-label:hover {
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+    background-color: var(--bg-hover);
+  }
+
+  .font-error-msg {
+    font-size: 0.7rem;
+    color: var(--danger-color);
+    margin-top: 6px;
   }
 </style>
