@@ -1,5 +1,6 @@
 <script>
   import { getLogoDataUri } from '../utils/logos.js';
+  import { applyLUT } from '../utils/lut.js';
 
   let { 
     imageUrl = '', 
@@ -19,7 +20,9 @@
     showDate = true, 
     title = '', 
     styleMode = 'polaroid', // 'polaroid', 'hasselblad', 'pure', 'square'
-    cropRatio = 'original'
+    cropRatio = 'original',
+    lut = null,
+    lutIntensity = 100
   } = $props();
 
   let canvas = $state(null);
@@ -45,15 +48,20 @@
     }
   });
 
-  // Expose download method to the parent
+  // Expose download method to the parent (offscreen canvas for high resolution)
   export function download(filename = 'framed-photo.jpg') {
-    if (!canvas) return;
+    if (!imageElement) return;
     try {
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      const tempCanvas = document.createElement('canvas');
+      drawCanvas(tempCanvas, true);
+      const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.95);
       const link = document.createElement('a');
       link.download = filename;
       link.href = dataUrl;
       link.click();
+      // Cleanup
+      tempCanvas.width = 0;
+      tempCanvas.height = 0;
     } catch (e) {
       console.error('Download failed:', e);
       alert('圖片下載失敗，可能是由於跨網域安全性限制。請嘗試上傳本地相片。');
@@ -96,6 +104,8 @@
       showDate,
       styleMode,
       cropRatio,
+      lut,
+      lutIntensity,
       imageElement,
       logoImageElement
     };
@@ -123,9 +133,13 @@
 
   function redraw() {
     if (!canvas || !imageElement) return;
-    
     isDrawing = true;
-    const ctx = canvas.getContext('2d');
+    drawCanvas(canvas, false);
+    isDrawing = false;
+  }
+
+  function drawCanvas(targetCanvas, isHighRes) {
+    const ctx = targetCanvas.getContext('2d');
     
     const imgW = imageElement.naturalWidth;
     const imgH = imageElement.naturalHeight;
@@ -163,9 +177,20 @@
       }
     }
     
-    // Use the cropped photo dimensions for rendering and layout calculations
-    const photoW = sw;
-    const photoH = sh;
+    // Scale the photo dimensions down for the preview canvas (smooth scrolling/sliding)
+    let photoW = sw;
+    let photoH = sh;
+    
+    if (!isHighRes) {
+      const maxDim = lut ? 800 : 1200;
+      const currentMax = Math.max(sw, sh);
+      if (currentMax > maxDim) {
+        const scaleRatio = maxDim / currentMax;
+        photoW = Math.round(sw * scaleRatio);
+        photoH = Math.round(sh * scaleRatio);
+      }
+    }
+    
     const imgMin = Math.min(photoW, photoH);
     
     // Calculate borders based on percentage of shorter edge
@@ -201,8 +226,8 @@
     }
     
     // Apply dimensions to canvas
-    canvas.width = canvasW;
-    canvas.height = canvasH;
+    targetCanvas.width = canvasW;
+    targetCanvas.height = canvasH;
     
     // 1. Draw Canvas background color
     ctx.fillStyle = frameColor;
@@ -210,6 +235,17 @@
     
     // 2. Draw the photo using cropped coordinates
     ctx.drawImage(imageElement, sx, sy, sw, sh, imgX, imgY, photoW, photoH);
+    
+    // Apply LUT if present
+    if (lut) {
+      try {
+        const imgData = ctx.getImageData(imgX, imgY, photoW, photoH);
+        applyLUT(imgData, lut, lutIntensity / 100.0);
+        ctx.putImageData(imgData, imgX, imgY);
+      } catch (err) {
+        console.error('Failed to apply LUT:', err);
+      }
+    }
     
     // 3. Draw thin inner borders around the image
     if (innerBorder) {

@@ -36,6 +36,8 @@
   let showLens = $state(true);
   let showDate = $state(true);
   let cropRatio = $state("original");
+  let lut = $state(null);
+  let lutIntensity = $state(1.0);
 
   // Reference to Canvas instance
   let canvasRef = $state(null);
@@ -80,6 +82,8 @@
     authorName = "";
     title = "";
     cropRatio = "original";
+    lut = null;
+    lutIntensity = 1.0;
   }
 </script>
 
@@ -140,6 +144,8 @@
         {showDate}
         {styleMode}
         {cropRatio}
+        {lut}
+        {lutIntensity}
       />
     {:else}
       <div class="empty-state">
@@ -167,6 +173,8 @@
       bind:showDate
       bind:exif
       bind:cropRatio
+      bind:lut
+      bind:lutIntensity
       hasImage={!!imageUrl}
       onDownload={handleDownload}
       onReset={handleReset}

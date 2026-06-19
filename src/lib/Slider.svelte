@@ -1,11 +1,44 @@
 <script>
   let { label, min = 0, max = 100, step = 1, value = $bindable(), suffix = '' } = $props();
+
+  function handleBlur() {
+    if (value === null || value === undefined || isNaN(value)) {
+      value = min;
+    } else {
+      const stepDecimals = (step.toString().split('.')[1] || '').length;
+      let rounded = Math.round(value / step) * step;
+      if (stepDecimals > 0) {
+        rounded = parseFloat(rounded.toFixed(stepDecimals));
+      }
+      
+      if (rounded < min) {
+        value = min;
+      } else if (rounded > max) {
+        value = max;
+      } else {
+        value = rounded;
+      }
+    }
+  }
 </script>
 
 <div class="slider-container">
   <div class="slider-header">
     <span class="slider-label">{label}</span>
-    <span class="slider-value">{value}{suffix}</span>
+    <div class="slider-value-input-wrapper">
+      <input 
+        type="number" 
+        {min} 
+        {max} 
+        {step} 
+        bind:value={value} 
+        onblur={handleBlur}
+        class="slider-value-input" 
+      />
+      {#if suffix}
+        <span class="slider-suffix">{suffix}</span>
+      {/if}
+    </div>
   </div>
   <input type="range" {min} {max} {step} bind:value={value} class="slider-input" />
 </div>
@@ -26,10 +59,44 @@
     color: var(--text-secondary);
   }
 
-  .slider-value {
+  .slider-value-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .slider-value-input {
     font-family: var(--font-mono);
     font-size: 0.75rem;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 1px 4px;
+    width: 46px;
+    text-align: right;
+    outline: none;
+    transition: all 0.15s ease;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+    appearance: none;
+  }
+
+  .slider-value-input::-webkit-outer-spin-button,
+  .slider-value-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .slider-value-input:focus {
+    border-color: var(--accent-color);
+    background: var(--bg-card);
+  }
+
+  .slider-suffix {
+    font-size: 0.75rem;
     color: var(--text-light);
+    font-family: var(--font-sans);
   }
 
   .slider-input {

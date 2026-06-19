@@ -3,6 +3,7 @@
   import Toggle from "./Toggle.svelte";
   import Select from "./Select.svelte";
   import Button from "./Button.svelte";
+  import { parseCubeLUT } from "../utils/lut.js";
 
   let {
     styleMode = $bindable("polaroid"),
@@ -22,6 +23,8 @@
     showDate = $bindable(true),
     exif = $bindable({}),
     cropRatio = $bindable("original"),
+    lut = $bindable(null),
+    lutIntensity = $bindable(100),
     hasImage = false,
     onDownload,
     onReset,
@@ -128,6 +131,37 @@
     }
   }
 
+  let lutError = $state("");
+
+  function handleLUTUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const text = e.target.result;
+        const parsed = parseCubeLUT(text, file.name);
+        lut = parsed;
+        lutIntensity = 100; // Reset to 100% on upload
+        lutError = "";
+      } catch (err) {
+        console.error(err);
+        lutError = "LUT 檔案解析失敗，請確認是否為標準的 .cube 格式。";
+      }
+    };
+    reader.onerror = () => {
+      lutError = "讀取檔案失敗";
+    };
+    reader.readAsText(file);
+  }
+
+  function handleClearLUT() {
+    lut = null;
+    lutIntensity = 100;
+    lutError = "";
+  }
+
   const weightsList = [
     { value: "300", label: "細體 (Light 300)" },
     { value: "400", label: "標準 (Regular 400)" },
@@ -209,6 +243,48 @@
             ></span>
           </button>
         {/each}
+      </div>
+    </div>
+
+    <!-- LUT Color Filter -->
+    <div class="control-group" style="margin-top: 16px;">
+      <span class="control-label">相片色彩濾鏡 (LUT)</span>
+      
+      <div class="custom-font-box" style="margin-top: 4px; padding: 10px;">
+        {#if lut}
+          <div class="lut-active-container">
+            <div class="lut-info">
+              <span class="lut-name" title={lut.name}>✨ {lut.name}</span>
+              <button type="button" class="lut-clear-btn" onclick={handleClearLUT}>清除</button>
+            </div>
+            
+            <div style="margin-top: 8px;">
+              <Slider
+                label="濾鏡強度"
+                min={0}
+                max={100}
+                step={1}
+                suffix="%"
+                bind:value={lutIntensity}
+              />
+            </div>
+          </div>
+        {:else}
+          <div class="local-font-row">
+            <label class="file-upload-label">
+              <span>載入 .cube LUT 濾鏡檔案</span>
+              <input 
+                type="file" 
+                accept=".cube" 
+                onchange={handleLUTUpload}
+                style="display: none;"
+              />
+            </label>
+          </div>
+        {/if}
+        {#if lutError}
+          <div class="font-error-msg" style="margin-top: 6px;">{lutError}</div>
+        {/if}
       </div>
     </div>
 
@@ -549,5 +625,48 @@
     font-size: 0.7rem;
     color: var(--danger-color);
     margin-top: 6px;
+  }
+
+  /* LUT component styles */
+  .lut-active-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .lut-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+  }
+
+  .lut-name {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+  }
+
+  .lut-clear-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .lut-clear-btn:hover {
+    background-color: var(--danger-color);
+    color: #ffffff;
+    border-color: var(--danger-color);
   }
 </style>
