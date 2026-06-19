@@ -18,7 +18,8 @@
     showLens = true, 
     showDate = true, 
     title = '', 
-    styleMode = 'polaroid' // 'polaroid', 'hasselblad', 'pure', 'square'
+    styleMode = 'polaroid', // 'polaroid', 'hasselblad', 'pure', 'square'
+    cropRatio = 'original'
   } = $props();
 
   let canvas = $state(null);
@@ -94,6 +95,7 @@
       showLens,
       showDate,
       styleMode,
+      cropRatio,
       imageElement,
       logoImageElement
     };
@@ -122,7 +124,44 @@
     
     const imgW = imageElement.naturalWidth;
     const imgH = imageElement.naturalHeight;
-    const imgMin = Math.min(imgW, imgH);
+    
+    // Calculate source crop area based on cropRatio
+    let sx = 0, sy = 0;
+    let sw = imgW;
+    let sh = imgH;
+    
+    if (cropRatio !== 'original') {
+      let ratioVal = 1;
+      if (cropRatio === '1:1') ratioVal = 1.0;
+      else if (cropRatio === '4:3') ratioVal = 4 / 3;
+      else if (cropRatio === '3:2') ratioVal = 3 / 2;
+      else if (cropRatio === '16:9') ratioVal = 16 / 9;
+      else if (cropRatio === '21:9') ratioVal = 21 / 9;
+      else if (cropRatio === '2.7:1') ratioVal = 2.7;
+      
+      const isPortrait = imgH > imgW;
+      const targetRatio = isPortrait ? (1 / ratioVal) : ratioVal;
+      const origRatio = imgW / imgH;
+      
+      if (origRatio > targetRatio) {
+        // Original is wider than target -> crop width (sides)
+        sw = imgH * targetRatio;
+        sh = imgH;
+        sx = (imgW - sw) / 2;
+        sy = 0;
+      } else {
+        // Original is taller than target -> crop height (top/bottom)
+        sw = imgW;
+        sh = imgW / targetRatio;
+        sx = 0;
+        sy = (imgH - sh) / 2;
+      }
+    }
+    
+    // Use the cropped photo dimensions for rendering and layout calculations
+    const photoW = sw;
+    const photoH = sh;
+    const imgMin = Math.min(photoW, photoH);
     
     // Calculate borders based on percentage of shorter edge
     const margin = imgMin * (borderSize / 100);
@@ -140,18 +179,18 @@
     
     if (styleMode === 'square') {
       // Instagram style square aspect ratio
-      const maxDim = Math.max(imgW, imgH);
+      const maxDim = Math.max(photoW, photoH);
       canvasW = maxDim + 2 * margin;
       canvasH = canvasW;
       
-      imgX = (canvasW - imgW) / 2;
+      imgX = (canvasW - photoW) / 2;
       // Offset vertically upwards if we have bottom metadata padding
       const textPadding = imgMin * (bottomPadding / 100);
-      imgY = (canvasH - imgH) / 2 - (showExif ? textPadding / 2.5 : 0);
+      imgY = (canvasH - photoH) / 2 - (showExif ? textPadding / 2.5 : 0);
     } else {
       // Standard styles
-      canvasW = imgW + 2 * margin;
-      canvasH = imgH + margin + bottomMargin;
+      canvasW = photoW + 2 * margin;
+      canvasH = photoH + margin + bottomMargin;
       imgX = margin;
       imgY = margin;
     }
@@ -164,8 +203,8 @@
     ctx.fillStyle = frameColor;
     ctx.fillRect(0, 0, canvasW, canvasH);
     
-    // 2. Draw the photo
-    ctx.drawImage(imageElement, imgX, imgY, imgW, imgH);
+    // 2. Draw the photo using cropped coordinates
+    ctx.drawImage(imageElement, sx, sy, sw, sh, imgX, imgY, photoW, photoH);
     
     // 3. Draw thin inner borders around the image
     if (innerBorder) {
@@ -176,8 +215,8 @@
       ctx.strokeRect(
         imgX - gap,
         imgY - gap,
-        imgW + 2 * gap,
-        imgH + 2 * gap
+        photoW + 2 * gap,
+        photoH + 2 * gap
       );
     }
     
@@ -193,7 +232,7 @@
       if (fontFamily === 'monospace') fontName = "ui-monospace, 'Courier New', monospace";
       
       if (styleMode === 'polaroid') {
-        const textY = imgY + imgH + (bottomMargin - margin) / 2 + margin * 0.08;
+        const textY = imgY + photoH + (bottomMargin - margin) / 2 + margin * 0.08;
         
         // Left details: Camera Model + Brand logo/text
         ctx.textAlign = 'left';
@@ -230,7 +269,7 @@
         if (exif.aperture) params.push(exif.aperture);
         if (exif.shutter) params.push(exif.shutter);
         if (exif.iso) params.push(exif.iso);
-        ctx.fillText(params.join('   '), imgX + imgW, textY - 10 * scale * fontSizeScale);
+        ctx.fillText(params.join('   '), imgX + photoW, textY - 10 * scale * fontSizeScale);
         
         // Date / Author metadata row
         let rightSubText = '';
@@ -242,7 +281,7 @@
         if (rightSubText) {
           ctx.font = `300 ${14 * scale * fontSizeScale}px ${fontName}`;
           ctx.fillStyle = textColor === '#FFFFFF' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(44, 44, 42, 0.55)';
-          ctx.fillText(rightSubText, imgX + imgW, textY + 18 * scale * fontSizeScale);
+          ctx.fillText(rightSubText, imgX + photoW, textY + 18 * scale * fontSizeScale);
         }
         
         // Title (Centered)
@@ -254,14 +293,14 @@
         }
         
       } else if (styleMode === 'hasselblad') {
-        const textY = imgY + imgH + bottomMargin / 2 + margin * 0.12;
+        const textY = imgY + photoH + bottomMargin / 2 + margin * 0.12;
         
         // Small top border separating photo from technical parameters
         ctx.strokeStyle = textColor === '#FFFFFF' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)';
         ctx.lineWidth = Math.max(1.5, Math.round(scale * 0.75));
         ctx.beginPath();
-        ctx.moveTo(imgX, imgY + imgH + margin * 0.25);
-        ctx.lineTo(imgX + imgW, imgY + imgH + margin * 0.25);
+        ctx.moveTo(imgX, imgY + photoH + margin * 0.25);
+        ctx.lineTo(imgX + photoW, imgY + photoH + margin * 0.25);
         ctx.stroke();
         
         // Left: Camera Brand & Model
@@ -289,7 +328,7 @@
         if (exif.aperture) params.push(exif.aperture);
         if (exif.shutter) params.push(exif.shutter);
         if (exif.iso) params.push(exif.iso);
-        ctx.fillText(params.join('  •  '), imgX + imgW, textY);
+        ctx.fillText(params.join('  •  '), imgX + photoW, textY);
         
         // Center: Author name, date, title
         ctx.textAlign = 'center';

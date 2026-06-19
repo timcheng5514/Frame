@@ -21,6 +21,7 @@
     showLens = $bindable(true),
     showDate = $bindable(true),
     exif = $bindable({}),
+    cropRatio = $bindable('original'),
     hasImage = false,
     onDownload,
     onReset
@@ -31,6 +32,16 @@
     { value: 'hasselblad', label: '哈蘇底片 (Classic)' },
     { value: 'square', label: '社群正方形 (1:1)' },
     { value: 'pure', label: '極簡純邊框' }
+  ];
+
+  const cropsList = [
+    { value: 'original', label: '原始比例 (Original)' },
+    { value: '1:1', label: '1:1 正方形' },
+    { value: '4:3', label: '4:3 傳統' },
+    { value: '3:2', label: '3:2 經典底片' },
+    { value: '16:9', label: '16:9 寬螢幕' },
+    { value: '21:9', label: '21:9 電影寬幅' },
+    { value: '2.7:1', label: '2.7:1 寬銀幕 (Ultra)' }
   ];
 
   const fontsList = [
@@ -68,6 +79,10 @@
     <h3 class="section-title">版面配置</h3>
     <div class="control-group">
       <Select label="相框樣式" options={stylesList} bind:value={styleMode} />
+    </div>
+
+    <div class="control-group" style="margin-top: 16px;">
+      <Select label="相片裁切" options={cropsList} bind:value={cropRatio} />
     </div>
     
     <div class="control-group" style="margin-top: 16px;">

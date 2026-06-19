@@ -35,6 +35,7 @@
   let showLogo = $state(true);
   let showLens = $state(true);
   let showDate = $state(true);
+  let cropRatio = $state("original");
 
   // Reference to Canvas instance
   let canvasRef = $state(null);
@@ -78,13 +79,14 @@
     };
     authorName = "";
     title = "";
+    cropRatio = "original";
   }
 </script>
 
 <header>
   <div class="logo-section">
     <h1>
-      框景 <span>/ Minimal Frame</span> <span class="logo-badge">日系簡約</span>
+      框景 <span>/ Minimal Frame</span>
     </h1>
   </div>
   <div class="header-links">
@@ -137,6 +139,7 @@
         {showLens}
         {showDate}
         {styleMode}
+        {cropRatio}
       />
     {:else}
       <div class="empty-state">
@@ -163,6 +166,7 @@
       bind:showLens
       bind:showDate
       bind:exif
+      bind:cropRatio
       hasImage={!!imageUrl}
       onDownload={handleDownload}
       onReset={handleReset}
