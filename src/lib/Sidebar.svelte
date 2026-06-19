@@ -28,6 +28,11 @@
     exposure = $bindable(0.0),
     saturation = $bindable(0.0),
     noise = $bindable(0),
+    temperature = $bindable(0),
+    highlights = $bindable(0),
+    shadows = $bindable(0),
+    whites = $bindable(0),
+    blacks = $bindable(0),
     hasImage = false,
     onDownload,
     onReset,
@@ -241,6 +246,18 @@
       />
     </div>
 
+    <!-- Temperature Slider -->
+    <div class="control-group" style="margin-top: 16px;">
+      <Slider
+        label="色溫 (Temperature)"
+        min={-100}
+        max={100}
+        step={1}
+        suffix=""
+        bind:value={temperature}
+      />
+    </div>
+
     <!-- Saturation Slider -->
     <div class="control-group" style="margin-top: 16px;">
       <Slider
@@ -250,6 +267,54 @@
         step={1}
         suffix="%"
         bind:value={saturation}
+      />
+    </div>
+
+    <!-- Highlights Slider -->
+    <div class="control-group" style="margin-top: 16px;">
+      <Slider
+        label="高光 (Highlights)"
+        min={-100}
+        max={100}
+        step={1}
+        suffix="%"
+        bind:value={highlights}
+      />
+    </div>
+
+    <!-- Shadows Slider -->
+    <div class="control-group" style="margin-top: 16px;">
+      <Slider
+        label="陰影 (Shadows)"
+        min={-100}
+        max={100}
+        step={1}
+        suffix="%"
+        bind:value={shadows}
+      />
+    </div>
+
+    <!-- Whites Slider -->
+    <div class="control-group" style="margin-top: 16px;">
+      <Slider
+        label="白色值 (Whites)"
+        min={-100}
+        max={100}
+        step={1}
+        suffix="%"
+        bind:value={whites}
+      />
+    </div>
+
+    <!-- Blacks Slider -->
+    <div class="control-group" style="margin-top: 16px;">
+      <Slider
+        label="黑色值 (Blacks)"
+        min={-100}
+        max={100}
+        step={1}
+        suffix="%"
+        bind:value={blacks}
       />
     </div>
 

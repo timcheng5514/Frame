@@ -25,7 +25,12 @@
     lutIntensity = 100,
     exposure = 0.0,
     saturation = 0.0,
-    noise = 0
+    noise = 0,
+    temperature = 0,
+    highlights = 0,
+    shadows = 0,
+    whites = 0,
+    blacks = 0
   } = $props();
 
   let canvas = $state(null);
@@ -112,6 +117,11 @@
       exposure,
       saturation,
       noise,
+      temperature,
+      highlights,
+      shadows,
+      whites,
+      blacks,
       imageElement,
       logoImageElement
     };
@@ -188,7 +198,7 @@
     let photoH = sh;
     
     if (!isHighRes) {
-      const hasAdjustments = lut || exposure !== 0.0 || saturation !== 0.0 || noise > 0;
+      const hasAdjustments = lut || exposure !== 0.0 || saturation !== 0.0 || noise > 0 || temperature !== 0 || highlights !== 0 || shadows !== 0 || whites !== 0 || blacks !== 0;
       const maxDim = hasAdjustments ? 800 : 1200;
       const currentMax = Math.max(sw, sh);
       if (currentMax > maxDim) {
@@ -243,11 +253,11 @@
     // 2. Draw the photo using cropped coordinates
     ctx.drawImage(imageElement, sx, sy, sw, sh, imgX, imgY, photoW, photoH);
     
-    // Apply adjustments (LUT, Exposure, Saturation, Film Grain) if present
-    if (lut || exposure !== 0.0 || saturation !== 0.0 || noise > 0) {
+    // Apply adjustments (LUT, Exposure, Saturation, Film Grain, Temperature, Highlights, Shadows, Whites, Blacks) if present
+    if (lut || exposure !== 0.0 || saturation !== 0.0 || noise > 0 || temperature !== 0 || highlights !== 0 || shadows !== 0 || whites !== 0 || blacks !== 0) {
       try {
         const imgData = ctx.getImageData(imgX, imgY, photoW, photoH);
-        applyLUT(imgData, lut, lutIntensity / 100.0, exposure, saturation, noise);
+        applyLUT(imgData, lut, lutIntensity / 100.0, exposure, saturation, noise, temperature, highlights, shadows, whites, blacks);
         ctx.putImageData(imgData, imgX, imgY);
       } catch (err) {
         console.error('Failed to apply photo adjustments:', err);

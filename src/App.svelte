@@ -41,6 +41,11 @@
   let exposure = $state(0.0);
   let saturation = $state(0.0);
   let noise = $state(0);
+  let temperature = $state(0);
+  let highlights = $state(0);
+  let shadows = $state(0);
+  let whites = $state(0);
+  let blacks = $state(0);
 
   // Reference to Canvas instance
   let canvasRef = $state(null);
@@ -90,6 +95,11 @@
     exposure = 0.0;
     saturation = 0.0;
     noise = 0;
+    temperature = 0;
+    highlights = 0;
+    shadows = 0;
+    whites = 0;
+    blacks = 0;
   }
 </script>
 
@@ -155,6 +165,11 @@
         {exposure}
         {saturation}
         {noise}
+        {temperature}
+        {highlights}
+        {shadows}
+        {whites}
+        {blacks}
       />
     {:else}
       <div class="empty-state">
@@ -187,6 +202,11 @@
       bind:exposure
       bind:saturation
       bind:noise
+      bind:temperature
+      bind:highlights
+      bind:shadows
+      bind:whites
+      bind:blacks
       hasImage={!!imageUrl}
       onDownload={handleDownload}
       onReset={handleReset}

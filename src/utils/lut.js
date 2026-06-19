@@ -55,7 +55,7 @@ export function parseCubeLUT(text, filename = 'Custom LUT') {
 /**
  * Applies a 3D LUT, Exposure, Saturation, and Film Grain adjustments to ImageData.
  */
-export function applyLUT(imageData, lut, intensity = 1.0, exposure = 0.0, saturation = 0.0, noise = 0.0) {
+export function applyLUT(imageData, lut, intensity = 1.0, exposure = 0.0, saturation = 0.0, noise = 0.0, temperature = 0.0, highlights = 0.0, shadows = 0.0, whites = 0.0, blacks = 0.0) {
   const pixels = imageData.data;
   const len = pixels.length;
   
@@ -63,8 +63,13 @@ export function applyLUT(imageData, lut, intensity = 1.0, exposure = 0.0, satura
   const hasSaturation = saturation !== 0.0;
   const hasLut = lut !== null && lut !== undefined;
   const hasNoise = noise > 0.0;
+  const hasTemperature = temperature !== 0.0;
+  const hasHighlights = highlights !== 0.0;
+  const hasShadows = shadows !== 0.0;
+  const hasWhites = whites !== 0.0;
+  const hasBlacks = blacks !== 0.0;
   
-  if (!hasExposure && !hasSaturation && !hasLut && !hasNoise) return;
+  if (!hasExposure && !hasSaturation && !hasLut && !hasNoise && !hasTemperature && !hasHighlights && !hasShadows && !hasWhites && !hasBlacks) return;
   
   // Precompute exposure factor
   const exposureFactor = Math.pow(2, exposure);
@@ -74,6 +79,15 @@ export function applyLUT(imageData, lut, intensity = 1.0, exposure = 0.0, satura
   
   // Precompute film grain factor
   const noiseFactor = (noise / 100.0) * 45.0; // max noise offset of 45 (approx 18% variance)
+  
+  // Precompute temperature factor
+  const tempFactor = temperature / 500.0; // range from -0.2 to +0.2 at limits (-100 to 100)
+
+  // Precompute highlight, shadow, white, black factors
+  const hFactor = highlights / 100.0;
+  const sFactor = shadows / 100.0;
+  const wFactor = whites / 300.0;
+  const bFactor = blacks / 300.0;
   
   // Precompute LUT parameters
   let lutData = null;
@@ -101,12 +115,69 @@ export function applyLUT(imageData, lut, intensity = 1.0, exposure = 0.0, satura
       b = b * exposureFactor;
     }
 
+    // 1.5. Temperature adjustment
+    if (hasTemperature) {
+      r = r * (1.0 + tempFactor);
+      g = g * (1.0 + tempFactor * 0.1);
+      b = b * (1.0 - tempFactor);
+    }
+
     // 2. Saturation adjustment
     if (hasSaturation) {
       const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
       r = gray + (r - gray) * satFactor;
       g = gray + (g - gray) * satFactor;
       b = gray + (b - gray) * satFactor;
+    }
+
+    // 2.5. Highlights, Shadows, Whites, Blacks adjustments
+    if (hasHighlights || hasShadows || hasWhites || hasBlacks) {
+      let r_norm = r / 255.0;
+      let g_norm = g / 255.0;
+      let b_norm = b / 255.0;
+
+      if (hasHighlights) {
+        if (hFactor > 0) {
+          r_norm += (1.0 - r_norm) * hFactor * r_norm * r_norm;
+          g_norm += (1.0 - g_norm) * hFactor * g_norm * g_norm;
+          b_norm += (1.0 - b_norm) * hFactor * b_norm * b_norm;
+        } else {
+          r_norm += r_norm * hFactor * r_norm * r_norm;
+          g_norm += g_norm * hFactor * g_norm * g_norm;
+          b_norm += b_norm * hFactor * b_norm * b_norm;
+        }
+      }
+
+      if (hasShadows) {
+        const r_ws = r_norm * (1.0 - r_norm) * (1.0 - r_norm);
+        const g_ws = g_norm * (1.0 - g_norm) * (1.0 - g_norm);
+        const b_ws = b_norm * (1.0 - b_norm) * (1.0 - b_norm);
+        if (sFactor > 0) {
+          r_norm += (1.0 - r_norm) * sFactor * r_ws;
+          g_norm += (1.0 - g_norm) * sFactor * g_ws;
+          b_norm += (1.0 - b_norm) * sFactor * b_ws;
+        } else {
+          r_norm += r_norm * sFactor * r_ws;
+          g_norm += g_norm * sFactor * g_ws;
+          b_norm += b_norm * sFactor * b_ws;
+        }
+      }
+
+      if (hasWhites) {
+        r_norm += wFactor * r_norm * r_norm;
+        g_norm += wFactor * g_norm * g_norm;
+        b_norm += wFactor * b_norm * b_norm;
+      }
+
+      if (hasBlacks) {
+        r_norm += bFactor * (1.0 - r_norm) * (1.0 - r_norm);
+        g_norm += bFactor * (1.0 - g_norm) * (1.0 - g_norm);
+        b_norm += bFactor * (1.0 - b_norm) * (1.0 - b_norm);
+      }
+
+      r = r_norm * 255.0;
+      g = g_norm * 255.0;
+      b = b_norm * 255.0;
     }
 
     // Clamp values before LUT lookup
