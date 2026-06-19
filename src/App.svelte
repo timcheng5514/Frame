@@ -38,6 +38,9 @@
   let cropRatio = $state("original");
   let lut = $state(null);
   let lutIntensity = $state(1.0);
+  let exposure = $state(0.0);
+  let saturation = $state(0.0);
+  let noise = $state(0);
 
   // Reference to Canvas instance
   let canvasRef = $state(null);
@@ -84,6 +87,9 @@
     cropRatio = "original";
     lut = null;
     lutIntensity = 1.0;
+    exposure = 0.0;
+    saturation = 0.0;
+    noise = 0;
   }
 </script>
 
@@ -146,6 +152,9 @@
         {cropRatio}
         {lut}
         {lutIntensity}
+        {exposure}
+        {saturation}
+        {noise}
       />
     {:else}
       <div class="empty-state">
@@ -175,6 +184,9 @@
       bind:cropRatio
       bind:lut
       bind:lutIntensity
+      bind:exposure
+      bind:saturation
+      bind:noise
       hasImage={!!imageUrl}
       onDownload={handleDownload}
       onReset={handleReset}

@@ -22,7 +22,10 @@
     styleMode = 'polaroid', // 'polaroid', 'hasselblad', 'pure', 'square'
     cropRatio = 'original',
     lut = null,
-    lutIntensity = 100
+    lutIntensity = 100,
+    exposure = 0.0,
+    saturation = 0.0,
+    noise = 0
   } = $props();
 
   let canvas = $state(null);
@@ -106,6 +109,9 @@
       cropRatio,
       lut,
       lutIntensity,
+      exposure,
+      saturation,
+      noise,
       imageElement,
       logoImageElement
     };
@@ -182,7 +188,8 @@
     let photoH = sh;
     
     if (!isHighRes) {
-      const maxDim = lut ? 800 : 1200;
+      const hasAdjustments = lut || exposure !== 0.0 || saturation !== 0.0 || noise > 0;
+      const maxDim = hasAdjustments ? 800 : 1200;
       const currentMax = Math.max(sw, sh);
       if (currentMax > maxDim) {
         const scaleRatio = maxDim / currentMax;
@@ -236,14 +243,14 @@
     // 2. Draw the photo using cropped coordinates
     ctx.drawImage(imageElement, sx, sy, sw, sh, imgX, imgY, photoW, photoH);
     
-    // Apply LUT if present
-    if (lut) {
+    // Apply adjustments (LUT, Exposure, Saturation, Film Grain) if present
+    if (lut || exposure !== 0.0 || saturation !== 0.0 || noise > 0) {
       try {
         const imgData = ctx.getImageData(imgX, imgY, photoW, photoH);
-        applyLUT(imgData, lut, lutIntensity / 100.0);
+        applyLUT(imgData, lut, lutIntensity / 100.0, exposure, saturation, noise);
         ctx.putImageData(imgData, imgX, imgY);
       } catch (err) {
-        console.error('Failed to apply LUT:', err);
+        console.error('Failed to apply photo adjustments:', err);
       }
     }
     

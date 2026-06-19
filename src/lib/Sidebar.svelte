@@ -25,6 +25,9 @@
     cropRatio = $bindable("original"),
     lut = $bindable(null),
     lutIntensity = $bindable(100),
+    exposure = $bindable(0.0),
+    saturation = $bindable(0.0),
+    noise = $bindable(0),
     hasImage = false,
     onDownload,
     onReset,
@@ -222,28 +225,44 @@
     {/if}
   </div>
 
-  <!-- Color Presets & Typography -->
+  <!-- Photo Adjustments & Filters -->
   <div>
-    <h3 class="section-title">色彩與字體</h3>
+    <h3 class="section-title">相片微調與濾鏡</h3>
+    
+    <!-- Exposure Slider -->
     <div class="control-group">
-      <span class="control-label">相框配色預設</span>
-      <div class="color-preset-container">
-        {#each colorPresets as preset}
-          <button
-            type="button"
-            class="preset-btn"
-            style="background-color: {preset.frame}; border: 1px solid {preset.frame ===
-            '#FFFFFF'
-              ? 'var(--border-color)'
-              : 'transparent'}"
-            onclick={() => applyPreset(preset)}
-            title={preset.name}
-          >
-            <span class="preset-dot" style="background-color: {preset.text}"
-            ></span>
-          </button>
-        {/each}
-      </div>
+      <Slider
+        label="曝光度 (Exposure)"
+        min={-2.0}
+        max={2.0}
+        step={0.05}
+        suffix=" EV"
+        bind:value={exposure}
+      />
+    </div>
+
+    <!-- Saturation Slider -->
+    <div class="control-group" style="margin-top: 16px;">
+      <Slider
+        label="飽和度 (Saturation)"
+        min={-100}
+        max={100}
+        step={1}
+        suffix="%"
+        bind:value={saturation}
+      />
+    </div>
+
+    <!-- Noise Slider -->
+    <div class="control-group" style="margin-top: 16px;">
+      <Slider
+        label="膠片噪點 (Film Grain)"
+        min={0}
+        max={100}
+        step={1}
+        suffix="%"
+        bind:value={noise}
+      />
     </div>
 
     <!-- LUT Color Filter -->
@@ -285,6 +304,31 @@
         {#if lutError}
           <div class="font-error-msg" style="margin-top: 6px;">{lutError}</div>
         {/if}
+      </div>
+    </div>
+  </div>
+
+  <!-- Color Presets & Typography -->
+  <div>
+    <h3 class="section-title">色彩與字體</h3>
+    <div class="control-group">
+      <span class="control-label">相框配色預設</span>
+      <div class="color-preset-container">
+        {#each colorPresets as preset}
+          <button
+            type="button"
+            class="preset-btn"
+            style="background-color: {preset.frame}; border: 1px solid {preset.frame ===
+            '#FFFFFF'
+              ? 'var(--border-color)'
+              : 'transparent'}"
+            onclick={() => applyPreset(preset)}
+            title={preset.name}
+          >
+            <span class="preset-dot" style="background-color: {preset.text}"
+            ></span>
+          </button>
+        {/each}
       </div>
     </div>
 
